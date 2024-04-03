@@ -1,27 +1,28 @@
+"use client";
 import Image from "next/image";
 import React from "react";
-import {
-  MagnifyingGlassIcon,
-  PlusCircleIcon,
-} from "@heroicons/react/24/outline";
-import { HomeIcon } from "@heroicons/react/24/solid";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { signIn, useSession, signOut } from "next-auth/react";
 
 export default function Header() {
+  const { data: session } = useSession();
   return (
     <div className="shadow-sm border-b sticky top-0 bg-white z-30">
-      <div className="flex  items-center justify-between max-w-6xl mx-4 xl:mx-auto">
+      <div className="flex items-center justify-between max-w-6xl mx-4 xl:mx-auto">
         <div className="cursor-pointer h-24 w-24 relative hidden lg:inline-grid">
           <Image
             src="http://www.jennexplores.com/wp-content/uploads/2015/09/Instagram_logo_black.png"
             layout="fill"
             className="object-contain"
+            alt="Instagram Logo"
           />
         </div>
-        <div className="cursor-pointer h-24 w-10 relative  lg:hidden">
+        <div className="cursor-pointer h-24 w-10 relative lg:hidden">
           <Image
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Instagram_logo_2022.svg/1200px-Instagram_logo_2022.svg.png"
             layout="fill"
             className="object-contain"
+            alt="Instagram Logo"
           />
         </div>
 
@@ -36,15 +37,16 @@ export default function Header() {
           />
         </div>
 
-        <div className="flex space-x-4 items-center">
-          <HomeIcon className="hidden md:inline-flex h-6 cursor-pointer hover:scale-125 transition duration-200" />
-          <PlusCircleIcon className="h-6 cursor-pointer hover:scale-125 transi duration-200" />
-          <img
-            src="https://mmtec-talentfy.s3.amazonaws.com/avatars/953ea5c52d96663e1c615a816c456349.png"
-            alt="user-image"
-            className="h-10 rounded-full  cursor-pointer"
-          />
-        </div>
+        {session ? (
+          <img src={session.user.image} alt="user avatar" className="h-10 2-10 rounded-full cursor-point" onClick={() => signOut}/>
+        ) : (
+          <button
+            onClick={() => signIn()}
+            className="text-sm font-semibold text-blue-500"
+          >
+            Log In
+          </button>
+        )}
       </div>
     </div>
   );
