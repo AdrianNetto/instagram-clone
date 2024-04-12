@@ -1,16 +1,19 @@
 "use client";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  MagnifyingGlassIcon,
-  PlusCircleIcon,
-} from "@heroicons/react/24/outline";
+import { MdOutlinePhotoCamera } from "react-icons/md";
+import { AiOutlineClose } from "react-icons/ai";
+import { HiMagnifyingGlass } from "react-icons/hi2";
+import { CiCirclePlus } from "react-icons/ci";
 import { signIn, useSession, signOut } from "next-auth/react";
 import Modal from "react-modal";
-import { HiCamera } from "react-icons/hi";
-import { AiOutlineClose } from "react-icons/ai";
 import { app } from "@/firebase";
-import { getStorage } from "firebase/storage";
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
 
 export default function Header() {
   const { data: session } = useSession();
@@ -40,7 +43,30 @@ export default function Header() {
     setImageFileUploading(true);
 
     const storage = getStorage(app);
-    const fileName = new Date().getTime + "-" + selectedFile.name;
+    const fileName = new Date().getTime() + "-" + selectedFile.name;
+    const storageRef = ref(storage, fileName);
+    const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log("upload is " + progress + "% done");
+      },
+
+      (error) => {
+        console.error("error", error);
+        setImageFileUploading(false);
+        setImageFileUrl(null);
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          setImageFileUrl(downloadURL);
+          setImageFileUploading(false);
+        });
+      }
+    );
   }
 
   return (
@@ -65,7 +91,7 @@ export default function Header() {
 
         <div className="relative mt-1">
           <div className="absolute top-2 left-2">
-            <MagnifyingGlassIcon className="h-5 text-gray-500" />
+            <HiMagnifyingGlass className="h-5 text-gray-500" />
           </div>
           <input
             type="text"
@@ -76,7 +102,7 @@ export default function Header() {
 
         {session ? (
           <div className="flex gap-2 items-center">
-            <PlusCircleIcon
+            <CiCirclePlus
               className="text-2xl cursor-pointer transform hover:scale-125 transition duration-300 hover:text-red-600 h-7 w-7"
               onClick={() => setIsOpen(true)}
             />
@@ -105,11 +131,13 @@ export default function Header() {
                 onClick={() => setSelectedFile()}
                 src={imageFileUrl}
                 alt="selected file"
-                className="w-full max-h-[220px] object-over cursor-pointer"
+                className={`w-full max-h-[220px] object-over cursor-pointer ${
+                  imageFileUploading ? "animate-pulse" : ""
+                }`}
               />
             ) : (
               <>
-                <HiCamera
+                <MdOutlinePhotoCamera
                   className="text-5xl text-gray-400 cursor-pointer"
                   onClick={() => filePickerRef.current.click()}
                 />
