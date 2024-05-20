@@ -14,6 +14,12 @@ import {
   ref,
   uploadBytesResumable,
 } from "firebase/storage";
+import {
+  addDoc,
+  collection,
+  getFirestore,
+  serverTimestamp,
+} from "firebase/firestore";
 
 export default function Header() {
   const { data: session } = useSession();
@@ -21,7 +27,10 @@ export default function Header() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [imageFileUrl, setImageFileUrl] = useState(null);
   const [imageFileUploading, setImageFileUploading] = useState(false);
+  const [postUploading, setPostUploading] = useState(false);
+  const [caption, setCaption] = useState("");
   const filePickerRef = useRef(null);
+  const db = getFirestore(app);
 
   function addImageToPost(e) {
     const file = e.target.files[0];
@@ -67,6 +76,18 @@ export default function Header() {
         });
       }
     );
+  }
+
+  async function handleSubmit() {
+    setPostUploading(true);
+    // setImageFileUploading(true);
+    const docRef = await addDoc(collection(db, "posts"), {
+      username: session.user.username,
+      caption,
+      profileImgL: session.user.image,
+      timestamp: serverTimestamp(),
+    });
+    setIsOpen(false);
   }
 
   return (
@@ -156,8 +177,18 @@ export default function Header() {
             maxLength="150"
             placeholder="Please enter your caption here..."
             className="m-4 border-none text-center w-full focus:ring-0"
+            onChange={(e) => setCaption(e.target.value)}
           />
-          <button className="w-full bg-red-600 text-white p-2 shadow-md rounded-lg hover:brightness-105 disabeld:bg-gray-200 disabled:cursor-not-allowed disabled:hover:brightness-100">
+          <button
+            className="w-full bg-red-600 text-white p-2 shadow-md rounded-lg hover:brightness-105 disabeld:bg-gray-200 disabled:cursor-not-allowed disabled:hover:brightness-100"
+            disabled={
+              !selectedFile ||
+              caption.trim() === "" ||
+              postUploading ||
+              imageFileUploading
+            }
+            onClick={handleSubmit}
+          >
             Upload Post
           </button>
           <AiOutlineClose
