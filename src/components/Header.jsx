@@ -80,14 +80,15 @@ export default function Header() {
 
   async function handleSubmit() {
     setPostUploading(true);
-    // setImageFileUploading(true);
     const docRef = await addDoc(collection(db, "posts"), {
       username: session.user.username,
       caption,
-      profileImgL: session.user.image,
+      profileImg: session.user.image,
+      image: imageFileUrl,
       timestamp: serverTimestamp(),
     });
     setIsOpen(false);
+    location.reload();
   }
 
   return (
